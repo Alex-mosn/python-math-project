@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+import sys
+
+def usage():
+    print('USAGE\n\t./107transfer [num den]+\n')
+    print('DESCRIPTION')
+    print('\tnum\tpolynomial numerator defined by its coefficients')
+    print('\tden\tpolynomial denominator defined by its coefficients')
+
+def parse_arguments():
+    if len(sys.argv) < 2:
+        print("ERROR: Missing arguments")
+        usage()
+        sys.exit(84)
+    elif len(sys.argv) % 2 != 1:
+        print("ERROR: Invalid number of arguments")
+        usage()
+        sys.exit(84)
+    else:
+        return sys.argv[1:]
+
+def str_to_poly(str_poly):
+    try:
+        return list(map(int, str_poly.split('*')))
+    except ValueError:
+        print("ERROR: Invalid polynomial coefficients")
+        usage()
+        sys.exit(84)
+
+def multiply_polys(poly1, poly2):
+    m = len(poly1)
+    n = len(poly2)
+    result = [0] * (m + n - 1)
+    for i in range(m):
+        for j in range(n):
+            result[i+j] += poly1[i] * poly2[j]
+    return result
+
+def evaluate_transfer_function(f, x):
+    numerator = sum([coeff * x**exp for exp, coeff in enumerate(f[0])])
+    denominator = sum([coeff * x**exp for exp, coeff in enumerate(f[1])])
+    if denominator == 0:
+        print("ERROR: Division by zero")
+        sys.exit(84)
+    else:
+        return numerator / denominator
+
+def main():
+    args = parse_arguments()
+    components = [(str_to_poly(args[i]), str_to_poly(args[i+1])) for i in range(0, len(args), 2)]
+
+    global_transfer = components[0]
+    for i in range(1, len(components)):
+        global_transfer = (multiply_polys(global_transfer[0], components[i][0]), multiply_polys(global_transfer[1], components[i][1]))
+    
+    freqs = [i/1000 for i in range(1001)]
+    for freq in freqs:
+        response = evaluate_transfer_function(global_transfer, freq)
+        print('{:.3f} -> {:.5f}'.format(freq, response))
+
+if __name__ == '__main__':
+    main()
